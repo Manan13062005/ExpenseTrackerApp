@@ -10,8 +10,7 @@ A simple Android app to track daily expenses.
 
 ## Tech Used
 - Kotlin  
-- Jetpack Compose  
-- Material 3  
+- Jetpack Compose   
 
 ## Author
 Manan
