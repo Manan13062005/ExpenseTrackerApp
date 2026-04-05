@@ -9,28 +9,65 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
+import java.util.Calendar
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.expensetrackerapp.ui.theme.ExpenseTrackerAppTheme
-
-
+import androidx.compose.material.icons.filled.Delete
 data class Expense(
     val category: String,
     val title: String,
-    val amount: String,
-    val color: Color
+    val amount: Int,
+    val color: Color,
+    val date: Long
 )
 
 @Composable
 fun DashboardScreen(
     expenses: List<Expense>,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    onDeleteExpense: (Expense) -> Unit
 ) {
+
+    var selectedFilter by remember { mutableStateOf("Daily") }
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedExpense by remember { mutableStateOf<Expense?>(null) }
+
+    val calendar = Calendar.getInstance()
+
+    // ✅ Single filter logic
+    val filteredExpenses = expenses.filter { expense ->
+
+        val expenseCal = Calendar.getInstance()
+        expenseCal.timeInMillis = expense.date
+
+        when (selectedFilter) {
+
+            "Daily" -> {
+                calendar.get(Calendar.DAY_OF_YEAR) == expenseCal.get(Calendar.DAY_OF_YEAR) &&
+                        calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
+            }
+
+            "Weekly" -> {
+                calendar.get(Calendar.WEEK_OF_YEAR) == expenseCal.get(Calendar.WEEK_OF_YEAR) &&
+                        calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
+            }
+
+            "Monthly" -> {
+                calendar.get(Calendar.MONTH) == expenseCal.get(Calendar.MONTH) &&
+                        calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
+            }
+
+            else -> true
+        }
+    }
+
+    val total = filteredExpenses.sumOf { it.amount }
 
     Scaffold(
         floatingActionButton = {
@@ -50,7 +87,7 @@ fun DashboardScreen(
                 .padding(16.dp)
         ) {
 
-            // 🔥 Total Expense Card (static for now)
+            // 🔥 Total Card
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -61,13 +98,10 @@ fun DashboardScreen(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
 
-                    Text(
-                        text = "Total Expense",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text("Total Expense")
 
                     Text(
-                        text = "₹1200",
+                        text = "₹$total",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -76,15 +110,13 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🔥 Filter Chips
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                listOf("Daily", "Weekly", "Monthly").forEach {
+            // 🔥 Filters
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Daily", "Weekly", "Monthly").forEach { filter ->
                     FilterChip(
-                        selected = it == "Daily",
-                        onClick = { },
-                        label = { Text(it) }
+                        selected = filter == selectedFilter,
+                        onClick = { selectedFilter = filter },
+                        label = { Text(filter) }
                     )
                 }
             }
@@ -93,13 +125,12 @@ fun DashboardScreen(
 
             Text(
                 text = "Recent Expenses",
-                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 🔥 CATEGORY-WISE LIST
+            // 🔥 LIST
             LazyColumn {
 
                 val categories = listOf(
@@ -111,34 +142,27 @@ fun DashboardScreen(
 
                 categories.forEach { category ->
 
-                    val filteredList = expenses.filter {
+                    val filteredList = filteredExpenses.filter {
                         it.category == category
                     }
 
                     if (filteredList.isNotEmpty()) {
 
-                        // 🔹 Category Title
                         item {
                             Text(
                                 text = category,
-                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
 
-                        // 🔹 Expenses under that category
                         items(filteredList) { expense ->
 
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                elevation = CardDefaults.cardElevation(4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                )
+                                shape = RoundedCornerShape(16.dp)
                             ) {
 
                                 Row(
@@ -149,50 +173,105 @@ fun DashboardScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
 
-                                    // 🔵 Left side
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+
                                         Box(
                                             modifier = Modifier
                                                 .size(10.dp)
-                                                .background(expense.color, shape = CircleShape)
+                                                .background(expense.color, CircleShape)
                                         )
 
                                         Spacer(modifier = Modifier.width(8.dp))
 
-                                        Text(
-                                            text = expense.title,
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
+                                        Text(expense.title)
                                     }
 
-                                    // 🔴 Amount
-                                    Text(
-                                        text = expense.amount,
-                                        color = expense.color,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+
+                                        Text(
+                                            text = "₹${expense.amount}",
+                                            color = expense.color,
+                                            fontWeight = FontWeight.Bold
+                                        )
+
+                                        Spacer(modifier = Modifier.width(8.dp))
+
+                                        // ✅ DELETE BUTTON WITH DIALOG
+                                        IconButton(onClick = {
+                                            selectedExpense = expense
+                                            showDialog = true
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Delete",
+                                                tint = Color.Red
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
+
+                // ✅ Empty state
+                if (filteredExpenses.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No expenses found",
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+
+            // ✅ CONFIRMATION DIALOG
+            if (showDialog && selectedExpense != null) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+
+                    title = {
+                        Text("Delete Expense")
+                    },
+
+                    text = {
+                        Text("Are you sure you want to delete ${selectedExpense?.title}?")
+                    },
+
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                onDeleteExpense(selectedExpense!!)
+                                showDialog = false
+                            }
+                        ) {
+                            Text("Delete", color = Color.Red)
+                        }
+                    },
+
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showDialog = false }
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
+                )
             }
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {
     ExpenseTrackerAppTheme {
         DashboardScreen(
             expenses = listOf(
-                Expense("Food 🍔", "burger","₹200", Color(0xFFFF7043)),
-                Expense("Travel 🚗", "metro","₹500", Color(0xFF42A5F5))
+                Expense("Food 🍔", "burger",200, Color(0xFFFF7043),System.currentTimeMillis()),
+                Expense("Travel 🚗", "metro",500, Color(0xFF42A5F5),System.currentTimeMillis())
             ),
-            onAddClick = {}
+            onAddClick = {},
+            onDeleteExpense = {}
         )
     }
 }

@@ -30,9 +30,7 @@ class MainActivity : ComponentActivity() {
 
                 var expenses by remember {
                     mutableStateOf(
-                        listOf(
-                            Expense("Food 🍔", "burger","₹200", Color(0xFFFF7043))
-                        )
+                        emptyList<Expense>()
                     )
                 }
 
@@ -48,6 +46,9 @@ class MainActivity : ComponentActivity() {
                                 expenses = expenses,
                                 onAddClick = {
                                     navController.navigate("add")
+                                },
+                                onDeleteExpense = { expense ->
+                                    expenses = expenses - expense
                                 }
                             )
                         }

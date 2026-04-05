@@ -88,6 +88,7 @@ fun AddExpenseScreen(
 
         Button(
             onClick = {
+                val currentTime = System.currentTimeMillis()
                 val color = when (selectedCategory) {
                     "Food 🍔" -> androidx.compose.ui.graphics.Color(0xFFFF7043)
                     "Travel 🚗" -> androidx.compose.ui.graphics.Color(0xFF42A5F5)
@@ -95,15 +96,20 @@ fun AddExpenseScreen(
                     else -> androidx.compose.ui.graphics.Color(0xFFAB47BC)
                 }
 
-                onAddExpense(
-                    Expense(
-                        category = selectedCategory,
-                        title = title,
-                        amount = "₹$amount",
-                        color = color
+                val amountInt = amount.toIntOrNull()
+
+                if (title.isNotBlank() && amountInt != null && amountInt > 0) {
+                    onAddExpense(
+                        Expense(
+                            category = selectedCategory,
+                            title = title,
+                            amount = amountInt,
+                            color = color,
+                            date = System.currentTimeMillis()
+                        )
                     )
-                )
-                onBack()
+                    onBack()
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
