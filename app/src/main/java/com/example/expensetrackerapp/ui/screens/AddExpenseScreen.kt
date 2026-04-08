@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.expensetrackerapp.ui.theme.ExpenseTrackerAppTheme
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +67,7 @@ fun AddExpenseScreen(
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Category") },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
 
             ExposedDropdownMenu(
@@ -88,7 +90,7 @@ fun AddExpenseScreen(
 
         Button(
             onClick = {
-                val currentTime = System.currentTimeMillis()
+
                 val color = when (selectedCategory) {
                     "Food 🍔" -> androidx.compose.ui.graphics.Color(0xFFFF7043)
                     "Travel 🚗" -> androidx.compose.ui.graphics.Color(0xFF42A5F5)
@@ -115,6 +117,17 @@ fun AddExpenseScreen(
         ) {
             Text("Save Expense")
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddExpenseScreenPreview(){
+    ExpenseTrackerAppTheme {
+        AddExpenseScreen(
+            onAddExpense = {},
+            onBack = {}
+        )
     }
 }
 
