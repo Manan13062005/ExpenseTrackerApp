@@ -1,11 +1,11 @@
-package com.example.expensetrackerapp
+package com.example.expensetracker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 
-import com.example.expensetrackerapp.ui.ExpenseTrackerApp
+import com.example.expensetracker.ui.ExpenseTrackerApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

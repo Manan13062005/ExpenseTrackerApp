@@ -1,4 +1,4 @@
-package com.example.expensetrackerapp.ui.screens
+package com.example.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,15 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.expensetrackerapp.ui.theme.ExpenseTrackerAppTheme
-import androidx.compose.material.icons.filled.Delete
-data class Expense(
-    val category: String,
-    val title: String,
-    val amount: Int,
-    val color: Color,
-    val date: Long
-)
+import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
+
+// ✅ IMPORTANT: Use Room Entity (NOT your own data class)
+import com.example.expensetracker.data.local.entity.Expense
 
 @Composable
 fun DashboardScreen(
@@ -40,7 +36,6 @@ fun DashboardScreen(
 
     val calendar = Calendar.getInstance()
 
-    // ✅ Single filter logic
     val filteredExpenses = expenses.filter { expense ->
 
         val expenseCal = Calendar.getInstance()
@@ -72,8 +67,7 @@ fun DashboardScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onAddClick,
-                containerColor = MaterialTheme.colorScheme.primary
+                onClick = onAddClick
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Expense")
             }
@@ -87,7 +81,6 @@ fun DashboardScreen(
                 .padding(16.dp)
         ) {
 
-            // 🔥 Total Card
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -110,7 +103,6 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🔥 Filters
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Daily", "Weekly", "Monthly").forEach { filter ->
                     FilterChip(
@@ -130,7 +122,6 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 🔥 LIST
             LazyColumn {
 
                 val categories = listOf(
@@ -158,6 +149,13 @@ fun DashboardScreen(
 
                         items(filteredList) { expense ->
 
+                            val color = when (expense.category) {
+                                "Food 🍔" -> Color(0xFFFF7043)
+                                "Travel 🚗" -> Color(0xFF42A5F5)
+                                "Shopping 🛍️" -> Color(0xFF66BB6A)
+                                else -> Color(0xFFAB47BC)
+                            }
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -178,7 +176,7 @@ fun DashboardScreen(
                                         Box(
                                             modifier = Modifier
                                                 .size(10.dp)
-                                                .background(expense.color, CircleShape)
+                                                .background(color, CircleShape)
                                         )
 
                                         Spacer(modifier = Modifier.width(8.dp))
@@ -190,13 +188,12 @@ fun DashboardScreen(
 
                                         Text(
                                             text = "₹${expense.amount}",
-                                            color = expense.color,
+                                            color = color,
                                             fontWeight = FontWeight.Bold
                                         )
 
                                         Spacer(modifier = Modifier.width(8.dp))
 
-                                        // ✅ DELETE BUTTON WITH DIALOG
                                         IconButton(onClick = {
                                             selectedExpense = expense
                                             showDialog = true
@@ -214,7 +211,6 @@ fun DashboardScreen(
                     }
                 }
 
-                // ✅ Empty state
                 if (filteredExpenses.isEmpty()) {
                     item {
                         Text(
@@ -225,14 +221,11 @@ fun DashboardScreen(
                 }
             }
 
-            // ✅ CONFIRMATION DIALOG
             if (showDialog && selectedExpense != null) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
 
-                    title = {
-                        Text("Delete Expense")
-                    },
+                    title = { Text("Delete Expense") },
 
                     text = {
                         Text("Are you sure you want to delete ${selectedExpense?.title}?")
@@ -261,14 +254,27 @@ fun DashboardScreen(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {
     ExpenseTrackerAppTheme {
         DashboardScreen(
             expenses = listOf(
-                Expense("Food 🍔", "burger",200, Color(0xFFFF7043),System.currentTimeMillis()),
-                Expense("Travel 🚗", "metro",500, Color(0xFF42A5F5),System.currentTimeMillis())
+                Expense(
+                    id = 1,
+                    title = "Burger",
+                    amount = 200.0,
+                    category = "Food 🍔",
+                    date = System.currentTimeMillis()
+                ),
+                Expense(
+                    id = 2,
+                    title = "Metro",
+                    amount = 500.0,
+                    category = "Travel 🚗",
+                    date = System.currentTimeMillis()
+                )
             ),
             onAddClick = {},
             onDeleteExpense = {}

@@ -1,4 +1,4 @@
-package com.example.expensetrackerapp
+package com.example.expensetracker
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
