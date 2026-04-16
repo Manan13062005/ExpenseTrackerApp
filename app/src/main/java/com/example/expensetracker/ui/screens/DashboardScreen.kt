@@ -122,7 +122,7 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            LazyColumn {
+            LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
 
                 val categories = listOf(
                     "Food 🍔",
