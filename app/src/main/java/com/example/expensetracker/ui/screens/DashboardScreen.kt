@@ -19,8 +19,6 @@ import androidx.compose.ui.unit.dp
 import java.util.Calendar
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
-
-// ✅ IMPORTANT: Use Room Entity (NOT your own data class)
 import com.example.expensetracker.data.local.entity.Expense
 
 @Composable
@@ -42,7 +40,6 @@ fun DashboardScreen(
         expenseCal.timeInMillis = expense.date
 
         when (selectedFilter) {
-
             "Daily" -> {
                 calendar.get(Calendar.DAY_OF_YEAR) == expenseCal.get(Calendar.DAY_OF_YEAR) &&
                         calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
@@ -66,9 +63,7 @@ fun DashboardScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClick
-            ) {
+            FloatingActionButton(onClick = onAddClick) {
                 Icon(Icons.Default.Add, contentDescription = "Add Expense")
             }
         }
@@ -81,6 +76,7 @@ fun DashboardScreen(
                 .padding(16.dp)
         ) {
 
+            // 🔷 Total Card
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -90,9 +86,7 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
-
                     Text("Total Expense")
-
                     Text(
                         text = "₹$total",
                         style = MaterialTheme.typography.headlineMedium,
@@ -103,6 +97,7 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // 🔘 Filters
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Daily", "Weekly", "Monthly").forEach { filter ->
                     FilterChip(
@@ -139,14 +134,31 @@ fun DashboardScreen(
 
                     if (filteredList.isNotEmpty()) {
 
+                        // ✅ CATEGORY HEADER WITH TOTAL
                         item {
-                            Text(
-                                text = category,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
+
+                            val categoryTotal = filteredList.sumOf { it.amount }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = category,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = "₹$categoryTotal",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
 
+                        // ✅ EXPENSE ITEMS
                         items(filteredList) { expense ->
 
                             val color = when (expense.category) {
@@ -221,16 +233,14 @@ fun DashboardScreen(
                 }
             }
 
+            // 🧾 Delete Dialog
             if (showDialog && selectedExpense != null) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
-
                     title = { Text("Delete Expense") },
-
                     text = {
                         Text("Are you sure you want to delete ${selectedExpense?.title}?")
                     },
-
                     confirmButton = {
                         TextButton(
                             onClick = {
@@ -241,11 +251,8 @@ fun DashboardScreen(
                             Text("Delete", color = Color.Red)
                         }
                     },
-
                     dismissButton = {
-                        TextButton(
-                            onClick = { showDialog = false }
-                        ) {
+                        TextButton(onClick = { showDialog = false }) {
                             Text("Cancel")
                         }
                     }
@@ -254,7 +261,6 @@ fun DashboardScreen(
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {

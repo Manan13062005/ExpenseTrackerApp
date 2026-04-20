@@ -1,18 +1,18 @@
 package com.example.expensetracker.ui.screens
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.example.expensetracker.data.local.entity.Expense
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,85 +42,120 @@ fun AddExpenseScreen(
             .padding(16.dp)
     ) {
 
-        Text("Add Expense", style = MaterialTheme.typography.headlineSmall)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = { Text("What did you spend on?") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged {
-                    if (it.isFocused) {
-                        showKeypad = false
-                    }
-                }
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
-            value = amount,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Amount") },
-            interactionSource = interactionSource,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged {
-                    if (it.isFocused) {
-                        focusManager.clearFocus()
-                        showKeypad = true
-                    }
-                }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        var expanded by remember { mutableStateOf(false) }
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = {
-                expanded = it
-                showKeypad = false
-                focusManager.clearFocus()
-            }
+        // 🔼 ALL CONTENT (including button)
+        Column(
+            modifier = Modifier.weight(1f)
         ) {
 
-            OutlinedTextField(
-                value = selectedCategory,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Category") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
+            Text(
+                text = "Add Expense",
+                style = MaterialTheme.typography.headlineSmall
             )
 
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                categories.forEach {
-                    DropdownMenuItem(
-                        text = { Text(it) },
-                        onClick = {
-                            selectedCategory = it
-                            expanded = false
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("What did you spend on?") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged {
+                        if (it.isFocused) showKeypad = false
+                    }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = amount,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Amount") },
+                interactionSource = interactionSource,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            focusManager.clearFocus()
+                            showKeypad = true
                         }
-                    )
+                    }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            var expanded by remember { mutableStateOf(false) }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = {
+                    expanded = it
+                    showKeypad = false
+                    focusManager.clearFocus()
+                }
+            ) {
+
+                OutlinedTextField(
+                    value = selectedCategory,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Category") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded)
+                    },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    categories.forEach {
+                        DropdownMenuItem(
+                            text = { Text(it) },
+                            onClick = {
+                                selectedCategory = it
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ✅ SAVE BUTTON (correct position)
+            if (!showKeypad) {
+                Button(
+                    onClick = {
+                        val amountDouble = amount.toDoubleOrNull()
+
+                        if (title.isNotBlank() && amountDouble != null && amountDouble > 0) {
+                            onAddExpense(
+                                Expense(
+                                    id = 0,
+                                    title = title,
+                                    amount = amountDouble,
+                                    category = selectedCategory,
+                                    date = System.currentTimeMillis()
+                                )
+                            )
+                            onBack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding() // 🔥 prevents bottom overlap
+                ) {
+                    Text("Save Expense")
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
+        // 🔽 PUSH KEYPAD TO BOTTOM
         if (showKeypad) {
             CalculatorKeypad(
                 onNumberClick = { amount += it },
@@ -129,36 +164,8 @@ fun AddExpenseScreen(
                         amount = amount.dropLast(1)
                     }
                 },
-                onDone = {
-                    showKeypad = false
-                }
+                onDone = { showKeypad = false }
             )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (!showKeypad) {
-            Button(
-                onClick = {
-                    val amountDouble = amount.toDoubleOrNull()
-
-                    if (title.isNotBlank() && amountDouble != null && amountDouble > 0) {
-                        onAddExpense(
-                            Expense(
-                                id = 0,
-                                title = title,
-                                amount = amountDouble,
-                                category = selectedCategory,
-                                date = System.currentTimeMillis()
-                            )
-                        )
-                        onBack()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Expense")
-            }
         }
     }
 }
@@ -176,7 +183,12 @@ fun CalculatorKeypad(
         listOf(".","0","⌫")
     )
 
-    Column(modifier = Modifier.padding(8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(8.dp)
+    ) {
 
         buttons.forEach { row ->
             Row(
@@ -210,7 +222,7 @@ fun CalculatorKeypad(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun AddExpenseScreenPreview() {
     ExpenseTrackerAppTheme {
