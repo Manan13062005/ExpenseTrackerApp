@@ -1,1 +1,11 @@
-/build
+# APK files
+*.apk
+
+# Release build folder
+app/release/
+
+# Build outputs
+app/build/
+
+# IDE files
+.idea/
