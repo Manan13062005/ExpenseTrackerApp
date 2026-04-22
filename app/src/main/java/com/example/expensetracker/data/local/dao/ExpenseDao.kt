@@ -15,4 +15,12 @@ interface ExpenseDao {
 
     @Query("SELECT * FROM expenses ORDER BY date DESC")
     fun getAllExpenses(): Flow<List<Expense>>
+
+    @Query("""
+    SELECT * FROM expenses 
+    WHERE strftime('%m', date) = strftime('%m', 'now') 
+    AND strftime('%Y', date) = strftime('%Y', 'now')
+""")
+    fun getCurrentMonthExpenses(): Flow<List<Expense>>
+
 }

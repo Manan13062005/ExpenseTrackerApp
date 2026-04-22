@@ -18,14 +18,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import com.example.expensetracker.data.local.entity.Expense
+import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun DashboardScreen(
     expenses: List<Expense>,
     onAddClick: () -> Unit,
-    onDeleteExpense: (Expense) -> Unit
+    onDeleteExpense: (Expense) -> Unit,
+    navController: NavController
 ) {
 
     var selectedFilter by remember { mutableStateOf("Daily") }
@@ -76,7 +79,6 @@ fun DashboardScreen(
                 .padding(16.dp)
         ) {
 
-            // 🔷 Total Card
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -95,9 +97,19 @@ fun DashboardScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
 
-            // 🔘 Filters
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = { navController.navigate("budget_summary") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Budget & Summary")
+            }
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Daily", "Weekly", "Monthly").forEach { filter ->
                     FilterChip(
@@ -134,7 +146,6 @@ fun DashboardScreen(
 
                     if (filteredList.isNotEmpty()) {
 
-                        // ✅ CATEGORY HEADER WITH TOTAL
                         item {
 
                             val categoryTotal = filteredList.sumOf { it.amount }
@@ -158,7 +169,6 @@ fun DashboardScreen(
                             }
                         }
 
-                        // ✅ EXPENSE ITEMS
                         items(filteredList) { expense ->
 
                             val color = when (expense.category) {
@@ -233,7 +243,6 @@ fun DashboardScreen(
                 }
             }
 
-            // 🧾 Delete Dialog
             if (showDialog && selectedExpense != null) {
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
@@ -265,6 +274,9 @@ fun DashboardScreen(
 @Composable
 fun DashboardPreview() {
     ExpenseTrackerAppTheme {
+
+        val navController = rememberNavController()
+
         DashboardScreen(
             expenses = listOf(
                 Expense(
@@ -283,7 +295,8 @@ fun DashboardPreview() {
                 )
             ),
             onAddClick = {},
-            onDeleteExpense = {}
+            onDeleteExpense = {},
+            navController = navController
         )
     }
 }

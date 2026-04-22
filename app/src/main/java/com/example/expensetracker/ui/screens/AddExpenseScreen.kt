@@ -42,7 +42,6 @@ fun AddExpenseScreen(
             .padding(16.dp)
     ) {
 
-        // 🔼 ALL CONTENT (including button)
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -127,7 +126,6 @@ fun AddExpenseScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ✅ SAVE BUTTON (correct position)
             if (!showKeypad) {
                 Button(
                     onClick = {
@@ -148,14 +146,13 @@ fun AddExpenseScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .navigationBarsPadding() // 🔥 prevents bottom overlap
+                        .navigationBarsPadding()
                 ) {
                     Text("Save Expense")
                 }
             }
         }
 
-        // 🔽 PUSH KEYPAD TO BOTTOM
         if (showKeypad) {
             CalculatorKeypad(
                 onNumberClick = { amount += it },
