@@ -1,29 +1,33 @@
 package com.example.expensetracker.ui
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavController
+import com.google.accompanist.navigation.animation.*
 import com.example.expensetracker.ui.screens.AddExpenseScreen
 import com.example.expensetracker.ui.screens.BudgetSummaryScreen
 import com.example.expensetracker.ui.screens.DashboardScreen
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import com.example.expensetracker.data.viewmodel.ExpenseViewModel
-
+import kotlinx.coroutines.delay
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ExpenseTrackerApp() {
 
     ExpenseTrackerAppTheme {
 
-        val navController = rememberNavController()
-
+        val navController = rememberAnimatedNavController()
         val viewModel: ExpenseViewModel = viewModel()
-
         val expenses by viewModel.allExpenses.collectAsState(initial = emptyList())
 
         Surface(
@@ -31,10 +35,38 @@ fun ExpenseTrackerApp() {
             color = MaterialTheme.colorScheme.background
         ) {
 
-            NavHost(
+            AnimatedNavHost(
                 navController = navController,
-                startDestination = "dashboard"
+                startDestination = "splash",
+                enterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                },
+                exitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { -it },
+                        animationSpec = tween(300)
+                    )
+                },
+                popEnterTransition = {
+                    slideInHorizontally(
+                        initialOffsetX = { -it },
+                        animationSpec = tween(300)
+                    )
+                },
+                popExitTransition = {
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(300)
+                    )
+                }
             ) {
+
+                composable("splash") {
+                    SplashScreen(navController)
+                }
 
                 composable("dashboard") {
                     DashboardScreen(
@@ -43,16 +75,17 @@ fun ExpenseTrackerApp() {
                             navController.navigate("add")
                         },
                         onDeleteExpense = { expense ->
-                            viewModel.deleteExpense(expense)   // make sure this exists
+                            viewModel.deleteExpense(expense)
                         },
-                        navController = navController
+                        navController = navController,
+                        viewModel = viewModel
                     )
                 }
 
                 composable("add") {
                     AddExpenseScreen(
                         onAddExpense = { newExpense ->
-                            viewModel.addExpense(newExpense)   // make sure this exists
+                            viewModel.addExpense(newExpense)
                         },
                         onBack = {
                             navController.popBackStack()
@@ -65,5 +98,30 @@ fun ExpenseTrackerApp() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SplashScreen(navController: NavController) {
+
+    val scale = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        scale.animateTo(1f, animationSpec = tween(800))
+        delay(1500)
+        navController.navigate("dashboard") {
+            popUpTo("splash") { inclusive = true }
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Expense Tracker",
+            modifier = Modifier.scale(scale.value),
+            style = MaterialTheme.typography.headlineLarge
+        )
     }
 }

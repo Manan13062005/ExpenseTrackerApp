@@ -17,18 +17,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.util.Calendar
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
-import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import com.example.expensetracker.data.local.entity.Expense
+import com.example.expensetracker.data.viewmodel.ExpenseViewModel
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import androidx.navigation.compose.rememberNavController
-
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 @Composable
 fun DashboardScreen(
     expenses: List<Expense>,
     onAddClick: () -> Unit,
     onDeleteExpense: (Expense) -> Unit,
-    navController: NavController
+    navController: NavController,
+    viewModel: ExpenseViewModel
 ) {
 
     var selectedFilter by remember { mutableStateOf("Daily") }
@@ -38,7 +41,6 @@ fun DashboardScreen(
     val calendar = Calendar.getInstance()
 
     val filteredExpenses = expenses.filter { expense ->
-
         val expenseCal = Calendar.getInstance()
         expenseCal.timeInMillis = expense.date
 
@@ -47,22 +49,26 @@ fun DashboardScreen(
                 calendar.get(Calendar.DAY_OF_YEAR) == expenseCal.get(Calendar.DAY_OF_YEAR) &&
                         calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
             }
-
             "Weekly" -> {
                 calendar.get(Calendar.WEEK_OF_YEAR) == expenseCal.get(Calendar.WEEK_OF_YEAR) &&
                         calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
             }
-
             "Monthly" -> {
                 calendar.get(Calendar.MONTH) == expenseCal.get(Calendar.MONTH) &&
                         calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
             }
-
             else -> true
         }
     }
 
     val total = filteredExpenses.sumOf { it.amount }
+
+    val budget by viewModel.budget.collectAsState()
+    val remaining by viewModel.remaining.collectAsState()
+
+    val progress = if (budget > 0) {
+        (total.toFloat() / budget.toFloat()).coerceIn(0f, 1f)
+    } else 0f
 
     Scaffold(
         floatingActionButton = {
@@ -88,15 +94,38 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
+
+                    val formattedTotal = "%,.0f".format(total)
+
                     Text("Total Expense")
                     Text(
-                        text = "₹$total",
+                        text = "₹$formattedTotal",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
+
+                    Spacer(modifier = Modifier.height(5.dp))
+
+                    if (budget == 0.0) {
+                        Text("No budget set", color = Color.Gray)
+                    } else {
+                        val formattedBudget = "%,.0f".format(budget)
+                        val formattedRemaining = "%,.0f".format(remaining)
+
+                        Text("Budget: ₹$formattedBudget")
+                        Text("Remaining: ₹$formattedRemaining")
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                        )
+                    }
                 }
             }
-
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -109,7 +138,6 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(5.dp))
 
-
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Daily", "Weekly", "Monthly").forEach { filter ->
                     FilterChip(
@@ -120,14 +148,14 @@ fun DashboardScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
                 text = "Recent Expenses",
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             LazyColumn(contentPadding = PaddingValues(bottom = 100.dp)) {
 
@@ -276,6 +304,8 @@ fun DashboardPreview() {
     ExpenseTrackerAppTheme {
 
         val navController = rememberNavController()
+        val context = LocalContext.current
+        val viewModel = ExpenseViewModel(context.applicationContext as Application)
 
         DashboardScreen(
             expenses = listOf(
@@ -296,7 +326,8 @@ fun DashboardPreview() {
             ),
             onAddClick = {},
             onDeleteExpense = {},
-            navController = navController
+            navController = navController,
+            viewModel = viewModel
         )
     }
 }
