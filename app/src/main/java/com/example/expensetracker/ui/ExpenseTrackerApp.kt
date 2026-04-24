@@ -20,6 +20,7 @@ import com.example.expensetracker.ui.screens.DashboardScreen
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import com.example.expensetracker.data.viewmodel.ExpenseViewModel
 import kotlinx.coroutines.delay
+import com.example.expensetracker.ui.screens.PreviousSummaryScreen
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ExpenseTrackerApp() {
@@ -95,6 +96,10 @@ fun ExpenseTrackerApp() {
 
                 composable("budget_summary") {
                     BudgetSummaryScreen(viewModel)
+                }
+
+                composable("previous_summary") {
+                    PreviousSummaryScreen(viewModel)
                 }
             }
         }

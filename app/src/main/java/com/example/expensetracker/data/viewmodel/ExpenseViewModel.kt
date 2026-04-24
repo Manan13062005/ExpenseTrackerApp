@@ -8,6 +8,7 @@ import com.example.expensetracker.data.local.entity.Expense
 import com.example.expensetracker.data.repository.ExpenseRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class ExpenseViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -30,8 +31,17 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    val totalSpent: StateFlow<Double> = allExpenses
-        .map { list -> list.sumOf { it.amount } }
+    val totalMonthlySpent: StateFlow<Double> = allExpenses
+        .map { list ->
+            val calendar = Calendar.getInstance()
+            list.filter { expense ->
+                val expenseCal = Calendar.getInstance()
+                expenseCal.timeInMillis = expense.date
+
+                calendar.get(Calendar.MONTH) == expenseCal.get(Calendar.MONTH) &&
+                        calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
+            }.sumOf { it.amount }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0.0)
 
     val categoryTotals: StateFlow<Map<String, Double>> = allExpenses
@@ -44,11 +54,43 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     private val _budget = MutableStateFlow(0.0)
     val budget: StateFlow<Double> = _budget
 
-    fun setBudget(amount: Double) {
-        _budget.value = amount
+    init {
+        val prefs = getApplication<Application>()
+            .getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+
+        _budget.value = prefs.getFloat("budget", 0f).toDouble()
     }
 
-    val remaining: StateFlow<Double> = combine(totalSpent, budget) { spent, budget ->
+    fun setBudget(amount: Double) {
+        _budget.value = amount
+
+        val prefs = getApplication<Application>()
+            .getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+
+        prefs.edit().putFloat("budget", amount.toFloat()).apply()
+    }
+
+    val remaining: StateFlow<Double> = combine(totalMonthlySpent, budget) { spent, budget ->
         budget - spent
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0.0)
+
+    fun getPreviousMonthsCategoryTotals(): Flow<Map<String, Double>> {
+        return allExpenses.map { list ->
+            val calendar = java.util.Calendar.getInstance()
+            val currentMonth = calendar.get(java.util.Calendar.MONTH)
+            val currentYear = calendar.get(java.util.Calendar.YEAR)
+
+            list.filter { expense ->
+                val expenseCal = java.util.Calendar.getInstance()
+                expenseCal.timeInMillis = expense.date
+
+                expenseCal.get(java.util.Calendar.YEAR) < currentYear ||
+                        (expenseCal.get(java.util.Calendar.YEAR) == currentYear &&
+                                expenseCal.get(java.util.Calendar.MONTH) < currentMonth)
+            }
+                .groupBy { it.category }
+                .mapValues { entry -> entry.value.sumOf { it.amount } }
+        }
+    }
+
 }

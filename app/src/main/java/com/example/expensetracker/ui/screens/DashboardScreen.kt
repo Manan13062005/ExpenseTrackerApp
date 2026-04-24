@@ -24,7 +24,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import androidx.navigation.compose.rememberNavController
 import android.app.Application
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun DashboardScreen(
     expenses: List<Expense>,
@@ -61,14 +65,29 @@ fun DashboardScreen(
         }
     }
 
+    val monthlyExpenses = expenses.filter { expense ->
+        val expenseCal = Calendar.getInstance()
+        expenseCal.timeInMillis = expense.date
+
+        calendar.get(Calendar.MONTH) == expenseCal.get(Calendar.MONTH) &&
+                calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
+    }
+
     val total = filteredExpenses.sumOf { it.amount }
+    val totalMonthlyExpense = monthlyExpenses.sumOf { it.amount }
 
     val budget by viewModel.budget.collectAsState()
     val remaining by viewModel.remaining.collectAsState()
 
     val progress = if (budget > 0) {
-        (total.toFloat() / budget.toFloat()).coerceIn(0f, 1f)
+        (totalMonthlyExpense.toFloat() / budget.toFloat()).coerceIn(0f, 1f)
     } else 0f
+
+    val progressColor = when {
+        progress < 0.5f -> Color(0xFF4CAF50)
+        progress < 0.8f -> Color(0xFFFFC107)
+        else -> Color(0xFFF44336)
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -119,6 +138,7 @@ fun DashboardScreen(
 
                         LinearProgressIndicator(
                             progress = { progress },
+                            color = progressColor,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp)
@@ -138,13 +158,23 @@ fun DashboardScreen(
 
             Spacer(modifier = Modifier.height(5.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 listOf("Daily", "Weekly", "Monthly").forEach { filter ->
                     FilterChip(
                         selected = filter == selectedFilter,
                         onClick = { selectedFilter = filter },
                         label = { Text(filter) }
                     )
+                }
+                Button(
+                    onClick = { navController.navigate("previous_summary") },
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text("History")
                 }
             }
 
@@ -298,6 +328,7 @@ fun DashboardScreen(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun DashboardPreview() {
