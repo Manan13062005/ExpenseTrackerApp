@@ -1,16 +1,21 @@
 # Expense Tracker App
 
-A simple Android app to track daily expenses.
+A modern Android app to track and analyze daily expenses with a clean UI and useful insights.
 
 ## Features
-- Add expenses  
-- Delete expenses with confirmation  
-- View total expense  
-- Filter by Daily, Weekly, Monthly  
 
-## Tech Used
-- Kotlin  
-- Jetpack Compose   
+* Add and delete expenses with confirmation
+* View total expenses
+* Filter expenses by Daily, Weekly, Monthly
+* Category-wise expense breakdown
+* Most spent category insight
+
+## Tech Stack
+
+* Kotlin
+* Jetpack Compose
+* MVVM Architecture
 
 ## Author
+
 Manan
