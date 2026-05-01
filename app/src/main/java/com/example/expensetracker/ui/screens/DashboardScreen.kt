@@ -26,7 +26,6 @@ import androidx.navigation.compose.rememberNavController
 import android.app.Application
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 
 @Composable

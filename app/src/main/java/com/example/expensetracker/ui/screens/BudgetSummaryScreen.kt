@@ -15,15 +15,23 @@ import com.example.expensetracker.data.viewmodel.ExpenseViewModel
 @Composable
 fun BudgetSummaryScreen(viewModel: ExpenseViewModel) {
 
-    val total by viewModel.totalMonthlySpent.collectAsState()
+    val totalSpent by viewModel.totalMonthlySpent.collectAsState()
+    val categoryTotals by viewModel.categoryTotals.collectAsState()
     val budget by viewModel.budget.collectAsState()
     val remaining by viewModel.remaining.collectAsState()
-    val categoryTotals by viewModel.categoryTotals.collectAsState()
 
     var input by rememberSaveable { mutableStateOf("") }
     var showKeypad by remember { mutableStateOf(false) }
 
-    val percent = if (budget == 0.0) 0.0 else (total * 100 / budget)
+    val percent = if (budget == 0.0) 0.0 else (totalSpent * 100 / budget)
+
+    fun formatAmount(amount: Double): String {
+        return if (amount % 1.0 == 0.0) {
+            "₹${amount.toInt()}"
+        } else {
+            "₹%.2f".format(amount)
+        }
+    }
 
     LaunchedEffect(budget) {
         if (input.isEmpty() && budget > 0) {
@@ -148,9 +156,9 @@ fun BudgetSummaryScreen(viewModel: ExpenseViewModel) {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("Total Spent: ₹$total")
-                    Text("Budget: ₹$budget")
-                    Text("Remaining: ₹$remaining")
+                    Text("Total Spent: ${formatAmount(totalSpent)}")
+                    Text("Budget: ${formatAmount(budget)}")
+                    Text("Remaining: ${formatAmount(remaining)}")
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -189,7 +197,7 @@ fun BudgetSummaryScreen(viewModel: ExpenseViewModel) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(category)
-                                Text("₹$amount")
+                                Text(formatAmount(amount))
                             }
                         }
                     }

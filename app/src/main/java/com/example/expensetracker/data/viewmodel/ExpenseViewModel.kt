@@ -17,6 +17,13 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
 
     val allExpenses = repository.allExpenses
 
+    private val categoryOrder = listOf(
+        "Food 🍔",
+        "Travel 🚗",
+        "Shopping 🛍️",
+        "Miscellaneous 📦"
+    )
+
     fun insert(expense: Expense) {
         viewModelScope.launch {
             repository.insert(expense)
@@ -34,20 +41,38 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
     val totalMonthlySpent: StateFlow<Double> = allExpenses
         .map { list ->
             val calendar = Calendar.getInstance()
+            val currentMonth = calendar.get(Calendar.MONTH)
+            val currentYear = calendar.get(Calendar.YEAR)
+
             list.filter { expense ->
                 val expenseCal = Calendar.getInstance()
                 expenseCal.timeInMillis = expense.date
 
-                calendar.get(Calendar.MONTH) == expenseCal.get(Calendar.MONTH) &&
-                        calendar.get(Calendar.YEAR) == expenseCal.get(Calendar.YEAR)
+                expenseCal.get(Calendar.MONTH) == currentMonth &&
+                        expenseCal.get(Calendar.YEAR) == currentYear
             }.sumOf { it.amount }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0.0)
 
     val categoryTotals: StateFlow<Map<String, Double>> = allExpenses
         .map { list ->
-            list.groupBy { it.category }
-                .mapValues { entry -> entry.value.sumOf { it.amount } }
+            val calendar = Calendar.getInstance()
+            val currentMonth = calendar.get(Calendar.MONTH)
+            val currentYear = calendar.get(Calendar.YEAR)
+
+            val filtered = list.filter { expense ->
+                val expenseCal = Calendar.getInstance()
+                expenseCal.timeInMillis = expense.date
+
+                expenseCal.get(Calendar.MONTH) == currentMonth &&
+                        expenseCal.get(Calendar.YEAR) == currentYear
+            }
+
+            val grouped = filtered.groupBy { it.category }
+
+            categoryOrder.associateWith { category ->
+                grouped[category]?.sumOf { it.amount } ?: 0.0
+            }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyMap())
 
@@ -76,21 +101,23 @@ class ExpenseViewModel(application: Application) : AndroidViewModel(application)
 
     fun getPreviousMonthsCategoryTotals(): Flow<Map<String, Double>> {
         return allExpenses.map { list ->
-            val calendar = java.util.Calendar.getInstance()
-            val currentMonth = calendar.get(java.util.Calendar.MONTH)
-            val currentYear = calendar.get(java.util.Calendar.YEAR)
+            val calendar = Calendar.getInstance()
+            val currentMonth = calendar.get(Calendar.MONTH)
+            val currentYear = calendar.get(Calendar.YEAR)
 
-            list.filter { expense ->
-                val expenseCal = java.util.Calendar.getInstance()
+            val filtered = list.filter { expense ->
+                val expenseCal = Calendar.getInstance()
                 expenseCal.timeInMillis = expense.date
 
-                expenseCal.get(java.util.Calendar.YEAR) < currentYear ||
-                        (expenseCal.get(java.util.Calendar.YEAR) == currentYear &&
-                                expenseCal.get(java.util.Calendar.MONTH) < currentMonth)
+                expenseCal.get(Calendar.MONTH) != currentMonth ||
+                        expenseCal.get(Calendar.YEAR) != currentYear
             }
-                .groupBy { it.category }
-                .mapValues { entry -> entry.value.sumOf { it.amount } }
+
+            val grouped = filtered.groupBy { it.category }
+
+            categoryOrder.associateWith { category ->
+                grouped[category]?.sumOf { it.amount } ?: 0.0
+            }
         }
     }
-
 }

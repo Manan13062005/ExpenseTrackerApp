@@ -12,17 +12,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.expensetracker.ui.theme.ExpenseTrackerAppTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 
+fun formatAmount(amount: Double): String {
+    return if (amount % 1.0 == 0.0) {
+        "₹${amount.toInt()}"
+    } else {
+        "₹%.2f".format(amount)
+    }
+}
+
 @Composable
 fun PreviousSummaryScreen(viewModel: ExpenseViewModel) {
 
-    val categoryTotals by viewModel
-        .getPreviousMonthsCategoryTotals()
+    val previousTotals by viewModel.getPreviousMonthsCategoryTotals()
         .collectAsState(initial = emptyMap())
 
-    val mostSpent = categoryTotals.maxByOrNull { it.value }
+    val mostSpent = previousTotals.maxByOrNull { it.value }
 
     PreviousSummaryContent(
-        categoryTotals = categoryTotals,
+        categoryTotals = previousTotals,
         mostSpent = mostSpent
     )
 }
@@ -54,7 +61,7 @@ fun PreviousSummaryContent(
         } else {
 
             Text(
-                text = "Total: ₹${"%,.0f".format(total)}",
+                text = "Total: ${formatAmount(total)}",
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -82,7 +89,7 @@ fun PreviousSummaryContent(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(category)
-                            Text("₹${"%,.0f".format(amount)}")
+                            Text(formatAmount(amount))
                         }
                     }
                 }
@@ -129,7 +136,7 @@ fun MostSpentCategoryCard(category: String, amount: Double) {
                 )
 
                 Text(
-                    text = "₹${"%,.0f".format(amount)}",
+                    text = formatAmount(amount),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -137,6 +144,7 @@ fun MostSpentCategoryCard(category: String, amount: Double) {
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun PreviousSummaryPreview() {
